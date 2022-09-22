@@ -324,7 +324,7 @@ WITH scores AS (
             ON b.code= p.code
             WHERE r.market = 'dkse'
             AND p.segment_name ='SE'
-            AND p.name LIKE '%DO NOT USE%' AND p.name LIKE '%do not use%'
+            AND p.name LIKE '%DO NOT USE%' OR p.name LIKE '%do not use%'
             GROUP BY 1, 2, 3, 4, 5, 6, 11, 12
          ) t
     GROUP BY 1,2--, skus.code

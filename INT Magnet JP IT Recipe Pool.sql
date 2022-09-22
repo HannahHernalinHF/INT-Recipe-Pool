@@ -202,7 +202,7 @@ group by 1
             ON b.code= p.code
             WHERE r.market IN ('jp','it')
             AND p.segment_name IN ('JP','IT')
-            AND p.name LIKE '%DO NOT USE%' AND p.name LIKE '%do not use%'
+            AND p.name LIKE '%DO NOT USE%' OR p.name LIKE '%do not use%'
             GROUP BY 1, 2, 3, 4, 5, 6, 11, 12
          ) t
     GROUP BY 1,2--, skus.code
@@ -388,3 +388,4 @@ where lower(r.status) in ('ready for menu planning', 'in development')
 where o=1)
 
 select distinct * from all_recipes
+where title NOT LIKE '%TEST%' OR title NOT LIKE '%Test%'
