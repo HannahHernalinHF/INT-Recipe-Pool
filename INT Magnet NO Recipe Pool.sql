@@ -68,7 +68,7 @@
          , max(seasonality_score) as seasonality_score
     from uploads.gp_sku_seasonality
         where  country in ('NORDICS')
-          and week>='W35' and week<='W60'
+          --and week>='W35' and week<='W60'
     group by 1
 )
 , recipe_usage as(
@@ -91,7 +91,7 @@
         , avg(price) as cost
     from materialized_views.culinary_services_recipe_static_price
     where segment = 'NO' and distribution_center = 'MO'
-        and hellofresh_week >= '2022-W35' and hellofresh_week <= '2022-W60'
+        --and hellofresh_week >= '2022-W35' and hellofresh_week <= '2022-W60'
     group by 1,2
 )
 , sku_cost as(
@@ -102,7 +102,7 @@
             on sku.id=sp.culinary_sku_id
     where  sku.market='dkse'
         and sp.distribution_center='MO'
-        and sp.hellofresh_week >=  '2022-W35' and sp.hellofresh_week <= '2022-W60'
+        --and sp.hellofresh_week >=  '2022-W35' and sp.hellofresh_week <= '2022-W60'
     group by 1
 )
 , picklists as(

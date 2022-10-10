@@ -25,7 +25,7 @@ group by 1
 ------ UPDATE THE PLANNING INTERVAL !!!!!!!
 -------
 ,seasonality as(
-select sku,max(seasonality_score) as seasonality_score from uploads.gp_sku_seasonality where country='GB' and week>='W37' and week<='W65'
+select sku,max(seasonality_score) as seasonality_score from uploads.gp_sku_seasonality where country='GB' --and week>='W37' and week<='W65'
 group by 1
 )
 ,last_sku_cost as(
@@ -33,7 +33,7 @@ select code,  status, avg(price) as price
 from materialized_views.procurement_services_staticprices sp
 left join materialized_views.procurement_services_culinarysku sku
 on sku.id=sp.culinary_sku_id
-where  sku.market='gb' and sp.hellofresh_week >= '2022-W37' and sp.hellofresh_week <= '2022-W65' and sp.distribution_center='GR'
+where  sku.market='gb' and sp.distribution_center='GR' --and sp.hellofresh_week >= '2022-W37' and sp.hellofresh_week <= '2022-W65'
 group by 1,2
 )
 
@@ -524,6 +524,6 @@ where lower(r.status) in ('ready for menu planning','final cook','in development
 where o=1)
 
 select distinct * from all_recipes
-WHERE uniquerecipecode NOT LIKE '%AO-%'
+WHERE uniquerecipecode NOT LIKE '%AO-%' OR uniquerecipecode NOT LIKE 'X%'
 
 
