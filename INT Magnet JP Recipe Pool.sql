@@ -277,16 +277,16 @@ select r.id as uuid
 ,r.status
 ,regexp_replace(r.title, '\t|\n', '') as title
 ,concat(regexp_replace(r.title, '\t|\n', ''), coalesce(regexp_replace(r.subtitle, '\t|\n', ''),'') ,coalesce (r.primary_protein,''),coalesce(r.primary_starch,''),coalesce(r.cuisine,''), coalesce(r.dish_type,''), coalesce(r.primary_vegetable,'')) as subtitle
-,r.primary_protein as primaryprotein
+,case when r.primary_protein IS NULL or r.primary_protein = "" then 'not available' else r.primary_protein end as primaryprotein
 ,r.main_protein as mainprotein
 ,r.protein_cut as proteincut
 ,coalesce(r.secondary_protein,'none') as secondaryprotein
 ,r.proteins
-,r.primary_starch as primarystarch
+,case when r.primary_starch IS NULL or r.primary_starch = '' then 'not available' else r.primary_starch end as primarystarch
 ,r.main_starch as mainstarch
 ,coalesce(r.secondary_starch,'none') as secondarystarch
 ,r.starches
-,coalesce(r.primary_vegetable,'none') as primaryvegetable
+,case when coalesce(r.primary_vegetable,'none') IS NULL or coalesce(r.primary_vegetable,'none') = '' then 'not available' else r.primary_protein end as primaryvegetable
 ,r.main_vegetable as mainvegetable
 --,r.vegetables
 ,coalesce(r.secondary_vegetable,'none') as secondaryvegetable
@@ -309,7 +309,7 @@ case when r.hands_off_time ="" or r.hands_off_time is NULL then cast(99 as float
 else cast(r.hands_off_time as float) end as totaltime
 ,r.difficulty
 --,r.tags as tag
-,r.target_preferences as preference
+,case when r.target_preferences IS NULL or r.target_preferences = '' then 'not available' else r.target_preferences end as preference
 ,concat (r.tags,r.target_preferences) as preftag
 --,r.target_products as producttype
 ,r.recipe_type as recipetype
@@ -334,8 +334,8 @@ end as scorewoscm
 ,coalesce(v.volume_share_2_last,0) as volumeshare2last */
 ,p.skucode
 ,lower(p.skuname) as skuname
-,p.skucount
---,sc2p.skucount
+--,p.skucount
+,sc2p.skucount
 ,i.inactiveskus_count
 ,d.donotuseskus_count
 ,i.inactiveskus

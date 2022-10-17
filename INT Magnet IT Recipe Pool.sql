@@ -384,8 +384,13 @@ where lower(r.status) in ('ready for menu planning', 'in development')
     and  r.market in ('it')
     and  p.cost2p >0
     and  p.cost4p >0
+    --and r.unique_recipe_code NOT LIKE '%MOD%'
+    --and code NOT LIKE '%MOD%'
+    and r.recipe_type NOT LIKE 'Modularity'
 ) temp
 where o=1)
 
 select distinct * from all_recipes
-where title NOT LIKE '%TEST%' OR title NOT LIKE '%Test%' OR title NOT LIKE '%Aperitivo Extra%'
+where title NOT LIKE '%TEST%'
+   OR title NOT LIKE '%Test%'
+   OR title NOT LIKE '%Aperitivo Extra%'
