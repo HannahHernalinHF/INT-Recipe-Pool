@@ -182,8 +182,8 @@
             ON s.sku = p.code
             LEFT JOIN uploads.gamp_dkse_boxitems b
             ON b.code= p.code
-            WHERE r.market IN ('jp','it')
-            AND p.segment_name IN ('JP','IT')
+            WHERE r.market = 'dkse'
+            AND p.segment_name = 'NO'
             AND p.size = 2
             GROUP BY 1, 2, 3, 4, 5, 6, 11, 12 ) t
         GROUP BY 1,13
