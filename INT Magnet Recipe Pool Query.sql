@@ -132,8 +132,8 @@ WITH scores_DKSE_NO AS (SELECT case when country IN ('DK','SE') then 'DKSE' else
             ON r.id = p.recipe_id
             LEFT JOIN materialized_views.procurement_services_culinarysku as skus
               ON skus.id = p.culinarysku_id
-            WHERE r.market IN ('dkse', 'it','jp')
-            AND p.segment_name IN ('SE', 'NO', 'IT','JP')
+            WHERE r.market IN ('dkse','it','jp','ie')
+            AND p.segment_name IN ('SE', 'NO', 'IT','JP','IE')
             AND skus.status LIKE '%Inactive%' OR skus.status LIKE '%Archived%'
             AND p.size = 2
             GROUP BY 1, 2, 3, 4, 5, 6, 7--, 11, 12
@@ -161,8 +161,8 @@ WITH scores_DKSE_NO AS (SELECT case when country IN ('DK','SE') then 'DKSE' else
             ON r.id = p.recipe_id
             LEFT JOIN materialized_views.procurement_services_culinarysku as skus
                ON skus.id = p.culinarysku_id
-            WHERE r.market IN ('dkse', 'it','jp')
-            AND p.segment_name IN ('SE', 'NO', 'IT','JP')
+            WHERE r.market IN ('dkse','it','jp','ie')
+            AND p.segment_name IN ('SE','NO','IT','JP','IE')
             AND p.name LIKE '%DO NOT USE%' OR p.name LIKE '%do not use%'
             AND p.size = 2
             GROUP BY 1, 2, 3, 4, 5, 6, 7--, 11, 12
@@ -189,8 +189,8 @@ WITH scores_DKSE_NO AS (SELECT case when country IN ('DK','SE') then 'DKSE' else
             ON r.id = p.recipe_id
             LEFT JOIN materialized_views.procurement_services_culinarysku as skus
                ON skus.id = p.culinarysku_id
-            WHERE r.market IN ('dkse', 'it','jp')
-            AND p.segment_name IN ('SE', 'NO', 'IT','JP')
+            WHERE r.market IN ('dkse','it','jp','ie')
+            AND p.segment_name IN ('SE', 'NO', 'IT','JP','IE')
             AND lower(p.name) LIKE '%chili%'
                  OR lower(p.name) LIKE '%chilli%'
                  OR lower(p.name) LIKE '%sriracha%'
@@ -491,7 +491,7 @@ select country,
     sku,
     max(seasonality_score) as seasonality_score
 from uploads.gp_sku_seasonality
-where country IN ('IT','JP','GB','IE','CA','FR') --and week>='W37'and week<='W65'
+where country IN ('IT','JP','GB','IE','CA','FR','DACH') --and week>='W37'and week<='W65'
 group by 1,2
 )
 
@@ -919,12 +919,12 @@ select r.id as uuid
      ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
 from materialized_views.isa_services_recipe_consolidated as r
 left join (select * from recipe_usage_IT_JP_IE where region_code = 'ie' and market = 'ie') as u on u.recipe_code = r.recipe_code
-left join (select * from nutrition_INT where market = 'ie' AND segment = 'IE') n on n.recipe_id = r.id
+left join (select * from nutrition_INT where market = 'ie' AND segment = 'IE') as n on n.recipe_id = r.id
 left join (select * from cost_INT where size=1 and segment = 'IE') rc_1 on rc_1.recipe_id=r.id
 left join (select * from cost_INT where size=2 and segment = 'IE') rc_2 on rc_2.recipe_id=r.id
 left join (select * from cost_INT where size=3 and segment = 'IE') rc_3 on rc_3.recipe_id=r.id
 left join (select * from cost_INT where size=4 and segment = 'IE') rc_4 on rc_4.recipe_id=r.id
-left join (select * from picklists_IT where market = 'ie' and segment_name = 'IE') as p on p.unique_recipe_code=r.unique_recipe_code
+left join picklists_IE as p on p.unique_recipe_code=r.unique_recipe_code
 left join (select * from inactiveskus_INT where market = 'ie' and segment_name = 'IE' ) as i on p.unique_recipe_code = i.unique_recipe_code --and on p.skucode = i.skucode
 left join (select * from donotuseskus_INT where market = 'ie' and segment_name = 'IE' ) as d on p.unique_recipe_code = d.unique_recipe_code --and on p.skucode = d.skucode
 left join (select * from spicysku_INT where market = 'ie' and segment_name = 'IE') as k on p.unique_recipe_code = k.unique_recipe_code
@@ -934,9 +934,9 @@ where lower(r.status) in ('ready for menu planning', 'in development')
     and length(r.primary_protein)>0
     and r.primary_protein <>'N/A'
     and  p.cost2p >0
-    and  p.cost4p >0
+    --and  p.cost4p >0
 ) temp
-where isdefault = 1 )
+where isdefault=1)
 
 , nutrition_GB as(
 select *
@@ -950,7 +950,7 @@ from (
 select *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
 from remps.recipe_recipes
-where remps_instance='CA'
+where remps_instance IN ('CA','DACH')
 )t where o=1
 )
 
@@ -960,7 +960,7 @@ from (
 select *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
 from remps.recipe_recipecost
-where remps_instance IN ('CA','FR')
+where remps_instance IN ('CA','FR','DACH')
 )t where o=1
 )
 
@@ -970,7 +970,7 @@ where remps_instance IN ('CA','FR')
         SELECT *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
         FROM remps.recipe_nutritionalinfopp
-        WHERE remps_instance='CA'
+        WHERE remps_instance IN ('CA','DACH')
     ) AS t
     WHERE o = 1)
 
@@ -980,7 +980,7 @@ from (
 select *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
 from remps.recipe_producttypes
-where remps_instance='CA'
+where remps_instance IN ('CA','DACH')
 )t where o=1
 )
 
@@ -990,7 +990,7 @@ from (
 select *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
 from remps.recipetags_recipepreferences
-where remps_instance='CA'
+where remps_instance IN ('CA','DACH')
 )t where o=1
 )
 
@@ -1000,7 +1000,7 @@ from (
 select *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
 from remps.map_recipepreferences_recipes
-where remps_instance='CA'
+where remps_instance IN ('CA','DACH')
 )t where o=1
 )
 
@@ -1010,7 +1010,7 @@ where remps_instance='CA'
         SELECT *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
         from remps.recipe_ingredientgroup
-    WHERE remps_instance='CA'
+    WHERE remps_instance IN ('CA','DACH')
     ) AS t
 WHERE o = 1)
 
@@ -1020,7 +1020,7 @@ SELECT *
         SELECT *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
         from remps.recipe_recipeskus
-    WHERE remps_instance='CA'
+    WHERE remps_instance IN ('CA','DACH')
     ) AS t
 WHERE o = 1)
 
@@ -1030,11 +1030,11 @@ FROM (
         SELECT *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
         from remps.sku_sku
-    WHERE remps_instance='CA'
+    WHERE remps_instance IN ('CA','DACH')
     ) AS t
 WHERE o = 1)
 
-,picklists_remps as(
+,picklists_CA as(
     select
     uniquerecipecode
     , group_concat(code," | ") as skucode
@@ -1047,12 +1047,12 @@ WHERE o = 1)
         , sku.code
         , regexp_replace(sku.display_name, '\t|\n', '') as display_name
         , seasonality_score
-        from last_recipe_remps r
-        join last_ingredient_group_remps ig
+        from (select * from last_recipe_remps where remps_instance = 'CA') as r
+        join (select * from last_ingredient_group_remps where remps_instance = 'CA') as ig
         on r.id = ig.ingredient_group__recipe
-        join last_recipe_sku_remps rs
+        join (select * from last_recipe_sku_remps where remps_instance = 'CA') as rs
         on ig.id = rs.recipe_sku__ingredient_group
-        join last_sku_remps sku
+        join (select * from last_sku_remps where remps_instance = 'CA') as sku
         on sku.id = rs.recipe_sku__sku
         left join (select * from seasonality_INT2 where country = 'CA') as s on s.sku=sku.code
         where  rs.quantity_to_order_2p>0
@@ -1079,7 +1079,7 @@ WHERE o = 1)
         on ig.id = rs.recipe_sku__ingredient_group
         join last_sku_remps sku
         on sku.id = rs.recipe_sku__sku
-        left join (select * from seasonality_INT2 where country = 'CA') as s on s.sku=sku.code
+        left join seasonality_INT2 as s on s.sku=sku.code
         where  rs.quantity_to_order_2p>0 AND sku.status LIKE '%Inactive%' OR sku.status LIKE '%Archived%'
         group by 1,2,3,4,5) t
     group by 1,2
@@ -1127,8 +1127,7 @@ WHERE o = 1)
         on ig.id = rs.recipe_sku__ingredient_group
         join last_sku_remps sku
         on sku.id = rs.recipe_sku__sku
-        where r.remps_instance IN ('ca')
-            and lower(sku.display_name) LIKE '%chili%'
+        where lower(sku.display_name) LIKE '%chili%'
                  OR lower(sku.display_name) LIKE '%chilli%'
                  OR lower(sku.display_name) LIKE '%sriracha%'
                  OR lower(sku.display_name) LIKE '%jalapeno%'
@@ -1145,7 +1144,7 @@ from (
 select *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
 from remps.recipetags_hqtags
-where remps_instance='CA'
+where remps_instance IN ('CA','DACH')
 )t where o=1
 )
 
@@ -1155,30 +1154,31 @@ from (
 select *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
 from remps.map_hqtags_recipes
-where remps_instance='CA'
+where remps_instance IN ('CA','DACH')
 )t where o=1
 )
 
 ,hqtag_remps as(
-select rr.unique_recipe_code as uniquerecipecode, coalesce(group_concat(distinct rt.original_name,','),'') as name from last_recipe_remps rr
+select rr.remps_instance,rr.unique_recipe_code as uniquerecipecode, coalesce(group_concat(distinct rt.original_name,','),'') as name
+from last_recipe_remps rr
 left join last_hqtag_map_remps m on rr.id= m.recipe_recipes_id
 left join last_hqtag_remps rt on rt.id=m.recipetags_hqtags_id
-group by 1
+group by 1,2
 )
 
 , preference_remps as(
-select rr.unique_recipe_code as uniquerecipecode, coalesce(group_concat(distinct rp.name,','),'') as name
+select rr.remps_instance, rr.unique_recipe_code as uniquerecipecode, coalesce(group_concat(distinct rp.name,','),'') as name
 from last_recipe_remps rr
 left join last_preference_map_remps m on rr.id= m.recipe_recipes_id
 left join last_preference_remps rp on rp.id=m.recipetags_recipepreferences_id
-group by 1
+group by 1,2
 )
 
 ,producttype_remps as(
-select rr.unique_recipe_code as uniquerecipecode, coalesce(group_concat(distinct rp.name,','),'') as name
+select rr.remps_instance,rr.unique_recipe_code as uniquerecipecode, coalesce(group_concat(distinct rp.name,','),'') as name
 from last_recipe_remps rr
 left join last_product_remps rp on rp.id=rr.recipe__product_type
-group by 1
+group by 1,2
 )
 
 , last_tag_map_remps as(
@@ -1187,7 +1187,7 @@ from (
 select *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
 from remps.map_tags_recipes
-where remps_instance='CA'
+where remps_instance IN ('CA','DACH')
 )t where o=1
 )
 
@@ -1198,16 +1198,16 @@ from (
 select *,
         dense_rank() over(partition by remps_instance order by fk_imported_at desc)o
 from remps.recipetags_tags
-where remps_instance='CA'
+where remps_instance IN ('CA','DACH')
 )t where o=1
 )
 
 , tag_remps as(
-select rr.unique_recipe_code as uniquerecipecode, coalesce(group_concat(distinct rt.name,','),'')as name
+select rr.remps_instance,rr.unique_recipe_code as uniquerecipecode, coalesce(group_concat(distinct rt.name,','),'')as name
 from last_recipe_remps rr
 left join last_tag_map_remps m on rr.id= m.recipe_recipes_id
 left join last_tag_remps rt on rt.id=m.recipetags_tags_id
-group by 1
+group by 1,2
 )
 
 
@@ -1293,17 +1293,17 @@ select cast(r.id as varchar) as rempsid
      ,case when steps.step_title IS NULL or steps.step_title LIKE '% |  |  %' then 'not available' else steps.step_title end as step_title
      ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
 from materialized_views.int_scm_analytics_remps_recipe as r
-left join last_recipe_remps as r2 on r2.unique_recipe_code=r.uniquerecipecode
+left join (select * from last_recipe_remps where remps_instance = 'CA') as r2 on r2.unique_recipe_code=r.uniquerecipecode
 left join (select * from last_cost_remps where remps_instance = 'CA') as rc on rc.recipe_cost__recipe=r2.id
-left join last_nutrition_remps as n on n.id=r.nutritionalinfo2p
-left join picklists_remps as p on p.uniquerecipecode=r.uniquerecipecode
-left join preference_remps as pf on pf.uniquerecipecode=r.uniquerecipecode
-left join hqtag_remps as ht on ht.uniquerecipecode=r.uniquerecipecode
-left join tag_remps as rt on rt.uniquerecipecode=r.uniquerecipecode
-left join producttype_remps as pt on pt.uniquerecipecode=r.uniquerecipecode
-left join inactiveskus_remps as i on p.uniquerecipecode = i.unique_recipe_code --and on p.skucode = i.skucode
-left join donotuseskus_remps as d on p.uniquerecipecode = d.unique_recipe_code --and on p.skucode = d.skucode
-left join spicysku_remps as k on p.uniquerecipecode = k.unique_recipe_code
+left join (select * from last_nutrition_remps where remps_instance = 'CA') as n on n.id=r.nutritionalinfo2p
+left join picklists_CA as p on p.uniquerecipecode=r.uniquerecipecode
+left join (select * from preference_remps where remps_instance = 'CA') as pf on pf.uniquerecipecode=r.uniquerecipecode
+left join (select * from hqtag_remps where remps_instance = 'CA') as ht on ht.uniquerecipecode=r.uniquerecipecode
+left join (select * from tag_remps where remps_instance = 'CA') as rt on rt.uniquerecipecode=r.uniquerecipecode
+left join (select * from producttype_remps where remps_instance = 'CA') as pt on pt.uniquerecipecode=r.uniquerecipecode
+left join (select * from inactiveskus_remps where market='CA') as i on p.uniquerecipecode = i.unique_recipe_code --and on p.skucode = i.skucode
+left join (select * from donotuseskus_remps where market='CA') as d on p.uniquerecipecode = d.unique_recipe_code --and on p.skucode = d.skucode
+left join (select * from spicysku_remps where market='CA') as k on p.uniquerecipecode = k.unique_recipe_code
 left join steps_INT as steps ON steps.unique_recipe_code = r.uniquerecipecode
 where lower(r.status) in ('ready for menu planning','active','in development')
     and lower(r.title) not like '%not use%' and lower(r.title) not like '%wrong%' and lower(r.title) not like '%test%'
@@ -1702,6 +1702,159 @@ where lower(r.status) in ('ready for menu planning','planned')
 ) temp
 where o=1)
 
+,picklists_DACH as(
+    select
+    uniquerecipecode
+    , group_concat(code," | ") as skucode
+    , group_concat(display_name," | ") as skuname
+    , max(coalesce(seasonality_score,0)) as seasonalityrisk
+    , sum(coalesce(singlepick,0)) as singlepick
+    , count(distinct code) as skucount
+    ,sum(quantity_to_order_2p) as pickcount
+    from (
+        select
+        r.unique_recipe_code as uniquerecipecode
+        , sku.code
+        , regexp_replace(sku.display_name, '\t|\n', '') as display_name
+        , seasonality_score
+        , singlepick
+        , rs.quantity_to_order_2p
+        from (select * from last_recipe_remps where remps_instance = 'DACH') as r
+        join (select * from last_ingredient_group_remps where remps_instance = 'DACH') as ig
+        on r.id = ig.ingredient_group__recipe
+        join (select * from last_recipe_sku_remps where remps_instance = 'DACH') as rs
+        on ig.id = rs.recipe_sku__ingredient_group
+        join (select * from last_sku_remps where remps_instance = 'DACH') as sku
+        on sku.id = rs.recipe_sku__sku
+        left join (select * from seasonality_INT2 where country = 'DACH') as s on s.sku=sku.code
+        left join uploads.gamp_dach_singlepicks as p on p.code= sku.code
+        where rs.quantity_to_order_2p>0
+        group by 1,2,3,4,5,6) t
+    group by 1
+)
+
+, all_recipes_DACH as(
+select * from(
+select cast(r.id as varchar) as rempsid
+       ,r.country
+       ,r.uniquerecipecode
+       ,r.mainrecipecode as code
+       ,r.version
+       ,r.status
+       ,regexp_replace(r.title, '\t|\n', '') as title
+       ,concat(r.title,coalesce(regexp_replace(r.subtitle, '\t|\n', ''),''),coalesce (r.primaryprotein,''),coalesce(r.primarystarch,''),coalesce(r.cuisine,''), coalesce(r.dishtype,'')) as subtitle
+       ,case when r.primaryprotein IS NULL OR r.primaryprotein = '' then 'not available' else r.primaryprotein end as primaryprotein
+       ,TRIM(coalesce(split_part(r.primaryprotein,'-',1),r.primaryprotein)) as mainprotein
+       ,TRIM(coalesce(split_part(r.primaryprotein,'-',2),r.primaryprotein)) as proteincut
+       ,coalesce(r.secondaryprotein,'none') as secondaryprotein
+       ,concat(coalesce (r.primaryprotein,''),coalesce(r.secondaryprotein,'none')) as proteins
+       ,CASE WHEN r.primarystarch IS NULL OR r.primarystarch = '' THEN 'not available' ELSE r.primarystarch END AS primarystarch
+       ,coalesce(TRIM(coalesce(split_part(r.primarystarch,'-',1),r.primarystarch)),'none') as mainstarch
+       ,coalesce(r.secondarystarch,'none') as secondarystarch
+       ,concat(coalesce (r.primarystarch,''),coalesce(r.secondarystarch,'none')) as starches
+       ,case when coalesce(r.primaryvegetable,'none') IS NULL OR coalesce(r.primaryvegetable,'none') = '' then 'not available' else coalesce(r.primaryvegetable,'none') end as primaryvegetable
+       ,coalesce(TRIM(coalesce(split_part(r.primaryvegetable,'-',1),r.primaryvegetable)),'none') as mainvegetable
+       --,concat(coalesce (r.primaryvegetable,'none'),coalesce(r.secondaryvegetable,'none'),coalesce(r.tertiaryvegetable,'none')) as vegetables
+       ,coalesce(r.secondaryvegetable,'none') as secondaryvegetable
+       --,coalesce(r.tertiaryvegetable,'none') as tertiaryvegetable
+       --,coalesce(r.primarydryspice,'none') as primarydryspice
+       ,coalesce(r.primarycheese,'none') as primarycheese
+       ,coalesce(r.primaryfruit,'none') as primaryfruit
+       ,coalesce(r.primarydairy,'none') as primarydairy
+       --,coalesce(r.primaryfreshherb,'none') as primaryfreshherb
+       --,coalesce(r.primarysauce,'none') as primarysauce
+       ,case when n.salt is null then 0 else n.salt end as salt
+       ,case when n.kilo_calories=0 then 999 else n.kilo_calories end as calories
+       ,case when n.carbohydrates=0 then 999 else n.kilo_calories end as carbohydrates
+       ,case when n.proteins = 0 or n.proteins is null then 999 else n.proteins end as n_proteins
+       --,case when n.saturated_fats is null then 0 else n.saturated_fats end as saturated_fats
+       ,case when r.cuisine IS NULL OR r.cuisine = '' then 'not available' else r.cuisine end as cuisine
+       ,case when r.dishtype IS NULL OR r.dishtype = '' then 'not available' else r.dishtype end as dishtype
+       ,case when r.handsontime ="" or r.handsontime is NULL then cast(99 as float)
+             when length (r.handsontime) >3 and cast( left(r.handsontime,2) as float) is NULL then 99
+             when length (r.handsontime) >3 and cast( left(r.handsontime,2) as float) is not NULL then cast( left(r.handsontime,2) as float)
+             when length (r.handsontime) <2 then cast(99 as float)
+             when r.handsontime='0' then cast(99 as float)
+             else cast(r.handsontime as float) end as handsontime
+       ,case when r.totaltime ="" or r.totaltime is NULL then cast(99 as float)
+             when length (r.totaltime) >3 and cast( left(r.totaltime,2) as float) is NULL then 99
+             when length (r.totaltime) >3 and cast( left(r.totaltime,2) as float) is not NULL then cast( left(r.totaltime,2) as float)
+             when length (r.totaltime) <2 then cast(99 as float)
+             when r.totaltime='0' then cast(99 as float)
+             else cast(r.totaltime as float) end as totaltime
+       ,cast(right(difficultylevel,1) as int) as difficulty
+       --,ht.name as hqtag
+       --,rt.name as tag
+       ,case when r.uniquerecipecode like 'M%' then 'Meister' else pf.name end as preference
+       ,concat (ht.name,rt.name,pf.name)  as preftag
+       ,pt.name as producttype
+     ,p.skucode
+     ,p.skuname
+     ,p.skucount
+     ,i.inactiveskus_count
+     ,d.donotuseskus_count
+     ,i.inactiveskus
+     ,d.donotuseskus
+     ,k.spicy_sku_count
+     ,k.spicy_skus
+     ,p.seasonalityrisk
+     --,round(rc.cost_1p,2) as cost1p
+     ,round(rc.cost_2p,2) as cost2p
+     --,round(rc.cost_3p,2) as cost3p
+     ,round(rc.cost_4p,2) as cost4p
+     ,p.skucode as pricemissingskus -- (disregard as this is just a dummy)
+     /*,p.pickcount
+     ,p.singlepick
+     ,coalesce(com.risk_index,1) as riskindex
+     ,coalesce(com.nr_skus,5.5) as nrskus */
+     ,r.lastused
+     --,r.nextused
+     ,r.absolutelastused
+     --,case when w.hellofresh_running_week is NOT NULL then w.hellofresh_running_week else -1 end as absolutelastusedrunning
+     ,case when r.lastused is NULL and r.nextused is NULL THEN 1 else 0 end as isnewrecipe
+     --,case when r.nextused is not NULL and r.lastused is NULL  then 1 else 0 end as isnewscheduled
+     ,r.isdefault as isdefault
+     ,dense_rank() over (partition by r.mainrecipecode, r.country, case when right(r.uniquerecipecode,2) in ('FR','CH','DK') then right(r.uniquerecipecode,2) else 'X' end order by cast(r.version as int) desc) as o
+     ,TO_TIMESTAMP(cast(r2.fk_imported_at as string),'yyyyMMdd') as updated_at --its not unix timestamp
+     ,case when steps.step_title IS NULL or steps.step_title LIKE '% |  |  %' then 'not available' else steps.step_title end as step_title
+     ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
+from materialized_views.int_scm_analytics_remps_recipe as r
+left join (select * from last_recipe_remps where remps_instance = 'DACH') as r2 on r2.unique_recipe_code=r.uniquerecipecode
+left join (select * from last_cost_remps where remps_instance = 'DACH') as rc on rc.id=r2.recipe__recipe_cost
+left join (select * from last_nutrition_remps where remps_instance = 'DACH') as n on n.id=r.nutritionalinfo2p
+left join picklists_DACH p on p.uniquerecipecode=r.uniquerecipecode
+left join (select * from preference_remps where remps_instance = 'DACH') as pf on pf.uniquerecipecode=r.uniquerecipecode
+left join (select * from hqtag_remps where remps_instance = 'DACH') as ht on ht.uniquerecipecode=r.uniquerecipecode
+left join (select * from tag_remps where remps_instance = 'DACH') as rt on rt.uniquerecipecode=r.uniquerecipecode
+left join (select * from producttype_remps where remps_instance = 'DACH') as pt on pt.uniquerecipecode=r.uniquerecipecode
+left join uploads.dach_goat_risk_complexity com on com.uniquerecipecode=r.uniquerecipecode
+left join (select * from inactiveskus_remps where market = 'DACH') as i on p.uniquerecipecode = i.unique_recipe_code --and on p.skucode = i.skucode
+left join (select * from donotuseskus_remps where market = 'DACH') as d on p.uniquerecipecode = d.unique_recipe_code --and on p.skucode = d.skucode
+left join (select * from spicysku_remps where market = 'DACH') as k on p.uniquerecipecode = k.unique_recipe_code
+left join steps_INT as steps ON steps.unique_recipe_code = r.uniquerecipecode
+where lower(r.status)  in ('ready for menu planning','pool','rework')
+    and  case when lower(r.status) in ('ready for menu planning','rework') then versionused is not NULL else TRUE end
+    and rc.cost_2p >1.5
+    and rc.cost_3p>0
+    and rc.cost_4p>0
+    and lower(r.title) not like '%not use%' and lower(r.title) not like '%wrong%'
+    and length (primaryprotein)>0
+    and primaryprotein <>'N/A'
+    and  r.country='DACH'
+    and right(r.uniquerecipecode,2)<>'CH'
+    and r.uniquerecipecode not like 'TEST%'
+    and r.uniquerecipecode not like 'HE%'
+    and r.uniquerecipecode not like 'ADD%'
+    and r.uniquerecipecode not like 'CO%'
+    and r.uniquerecipecode not like 'XMAS%'
+    and r.title not like 'PLACEH%'
+    /*and  case when lower(r.status)  in ('ready for menu planning') then r.absolutelastused >='2019-W01'
+                else TRUE  end
+    and ncat.primary_protein is not NULL*/
+) temp
+where o=1)
+
+
 
 select distinct * from all_recipes_DKSE
 UNION ALL
@@ -1711,8 +1864,10 @@ select distinct * from all_recipes_IT
 UNION ALL
 select distinct * from all_recipes_JP
 UNION ALL
-select distinct * from all_recipes_IE
-UNION ALL
 select distinct * from all_recipes_CA
 UNION ALL
 select distinct * from all_recipes_FR
+UNION ALL
+select distinct * from all_recipes_IE
+UNION ALL
+select distinct * from all_recipes_DACH
