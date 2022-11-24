@@ -21,8 +21,8 @@ WITH scores_DKSE_NO AS (SELECT case when country IN ('DK','SE') then 'DKSE' else
          , MAX(seasonality_score) AS seasonality_score
     FROM uploads.gp_sku_seasonality
     WHERE country IN ('NORDICS')
-      --AND week >= 'W39'
-      --AND week <= 'W65'
+      AND week >= 'W47'
+      AND week <= 'W52'
     GROUP BY 1
 )
    , recipe_usage_DKSE_NO AS (
@@ -491,7 +491,7 @@ select country,
     sku,
     max(seasonality_score) as seasonality_score
 from uploads.gp_sku_seasonality
-where country IN ('IT','JP','GB','IE','CA','FR','DACH') --and week>='W37'and week<='W65'
+where country IN ('IT','JP','GB','IE','CA','FR','DACH') and week>='W47'and week<='W52'
 group by 1,2
 )
 
@@ -1785,7 +1785,9 @@ select cast(r.id as varchar) as rempsid
        ,cast(right(difficultylevel,1) as int) as difficulty
        --,ht.name as hqtag
        --,rt.name as tag
-       ,case when r.uniquerecipecode like 'M%' then 'Meister' else pf.name end as preference
+       ,case when r.uniquerecipecode like 'M%' then 'Meister'
+         when pf.name IS NULL or pf.name = '' then 'not available'
+         else pf.name end as preference
        ,concat (ht.name,rt.name,pf.name)  as preftag
        ,pt.name as producttype
      ,p.skucode
@@ -1861,7 +1863,7 @@ UNION ALL
 select distinct * from all_recipes_NO
 UNION ALL
 select distinct * from all_recipes_IT
-UNION ALL
+UNION
 select distinct * from all_recipes_JP
 UNION ALL
 select distinct * from all_recipes_CA
