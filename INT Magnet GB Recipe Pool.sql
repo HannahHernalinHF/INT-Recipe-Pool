@@ -143,6 +143,7 @@ group by 1
         left join sku_cost c on c.code = p.code
         left join seasonality s on s.sku = p.code
         where pk.status LIKE '%Inactive%' OR pk.status LIKE '%Archived%'
+          and p.size = 2
         group by 1,2,3,4,5,6) t
     GROUP BY 1
     )
@@ -170,6 +171,7 @@ group by 1
         left join sku_cost c on c.code = p.code
         left join seasonality s on s.sku = p.code
         where p.name LIKE '%DO NOT USE%' AND p.name LIKE '%do not use%'
+          and p.size = 2
         group by 1,2,3,4,5,6) t
     GROUP BY 1
     )
@@ -350,8 +352,8 @@ select r.id as uuid
        --,round(p.cost_1p,2) as cost1p
        ,round(p.cost2p,2) as cost2p
        --,round(p.cost_3p,2) as cost3p
-       ,round(p.cost4p,2) as cost4p
-       ,p.pricemissingskus
+       --,round(p.cost4p,2) as cost4p
+       --,p.pricemissingskus
        --,p.pricemissingskunames
       /*,case when s.scorescm is not NULL then s.scorescm
              when avg(s.scorescm) over (partition by r.primaryprotein,r.cuisine, r.country ) is not NULL
@@ -404,7 +406,7 @@ select r.id as uuid
      --,r.nextused
      ,case when u.absolute_last_used is NULL then '' else u.absolute_last_used end as absolutelastused
      ,coalesce(cast(u.is_newrecipe as integer),1) as isnewrecipe
-     --,case when r.nextused is not NULL and r.lastused is NULL  then 1 else 0 end as isnewscheduled
+     ,coalesce(cast(u.is_newscheduled as integer),0) as isnewscheduled
      ,r.is_default as isdefault
      ,dense_rank() over (partition by r.recipe_code, r.market order by r.version  desc) as o
      ,r.updated_at as updated_at --its not unix timestamp
@@ -412,6 +414,7 @@ select r.id as uuid
      ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
      --,coalesce(a.AIP_ACCOUNTING_PC2,0) as last_aip
      --,coalesce(a.avg_aip,0) as avg_aip
+     ,r.image_url
 from materialized_views.isa_services_recipe_consolidated as r
 left join recipe_usage u on u.recipe_code = r.recipe_code
 left join nutrition n on n.recipe_id = r.id
@@ -443,3 +446,4 @@ where lower(r.status) in ('ready for menu planning','final cook')
 where o=1)
 
 select distinct * from all_recipes
+order by 3

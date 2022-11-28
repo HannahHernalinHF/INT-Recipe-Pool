@@ -336,8 +336,8 @@ WITH scores_DKSE_NO AS (SELECT case when country IN ('DK','SE') then 'DKSE' else
             --, r.cost1p
             , r.cost2p
             --, r.cost3p
-            , r.cost4p
-            , r.pricemissingskus
+            --, r.cost4p
+            --, r.pricemissingskus
             --, r.boxitem
             , u.last_used as lastused
             --, u.last_used_running_week
@@ -347,12 +347,13 @@ WITH scores_DKSE_NO AS (SELECT case when country IN ('DK','SE') then 'DKSE' else
             --, case when u.absolute_last_used_running_week is NULL then -1 else u.absolute_last_used_running_week end as absolutelastusedrunning
             --, u.lastnextuseddiff
             , coalesce(cast(u.is_newrecipe as integer),1) as isnewrecipe
-            --, coalesce(cast(u.is_newscheduled as integer),0) as isnewscheduled
+            , coalesce(cast(u.is_newscheduled as integer),0) as isnewscheduled
             , r.is_default as isdefault
             , r.o
             , r.updated_at as updated_at
             , case when steps.step_title IS NULL or steps.step_title LIKE '% |  |  %' then 'not available' else steps.step_title end as step_title
             , case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
+            , r.image_url
     from filtered_recipes_DKSE as r
         left join (select * from recipe_usage_DKSE_NO where region_code = 'se') as u
             on u.recipe_code = r.recipe_code
@@ -444,8 +445,8 @@ WITH scores_DKSE_NO AS (SELECT case when country IN ('DK','SE') then 'DKSE' else
             --, r.cost1p
             , r.cost2p
             --, r.cost3p
-            , r.cost4p
-            , r.pricemissingskus
+            --, r.cost4p
+            --, r.pricemissingskus
             --, r.boxitem
             , u.last_used as lastused
             --, u.last_used_running_week
@@ -455,12 +456,13 @@ WITH scores_DKSE_NO AS (SELECT case when country IN ('DK','SE') then 'DKSE' else
             --, case when u.absolute_last_used_running_week is NULL then -1 else u.absolute_last_used_running_week end as absolutelastusedrunning
             --, u.lastnextuseddiff
             , coalesce(cast(u.is_newrecipe as integer),1) as isnewrecipe
-            --, coalesce(cast(u.is_newscheduled as integer),0) as isnewscheduled
+            , coalesce(cast(u.is_newscheduled as integer),0) as isnewscheduled
             , r.is_default as isdefault
             , r.o
             , r.updated_at as updated_at
             , case when steps.step_title IS NULL or steps.step_title LIKE '% |  |  %' then 'not available' else steps.step_title end as step_title
             , case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
+            , r.image_url
     from filtered_recipes_NO as r
         left join (select * from recipe_usage_DKSE_NO where region_code = 'no') as u
             on u.recipe_code = r.recipe_code
@@ -700,8 +702,8 @@ select r.id as uuid
        ,p.seasonalityrisk
        ,round(p.cost2p,2) as cost2p
        --,round(p.cost3p,2) as cost3p
-       ,round(p.cost4p,2) as cost4p
-       ,p.pricemissingskus
+       --,round(p.cost4p,2) as cost4p
+       --,p.pricemissingskus
      ,u.last_used as lastused
      --,u.last_used_running_week
      --,u.next_used as nextused
@@ -709,12 +711,13 @@ select r.id as uuid
      ,case when u.absolute_last_used is NULL then '' else u.absolute_last_used end as absolutelastused
      --,case when u.absolute_last_used_running_week is NULL then -1 else u.absolute_last_used_running_week end as absolutelastusedrunning
      ,coalesce(cast(u.is_newrecipe as integer),1) as isnewrecipe
-     --,coalesce(cast(u.is_newscheduled as integer),0) as isnewscheduled
+     ,coalesce(cast(u.is_newscheduled as integer),0) as isnewscheduled
      ,r.is_default as isdefault
      ,dense_rank() over (partition by r.recipe_code, r.market order by r.version  desc) as o
      ,r.updated_at as updated_at --its not unix timestamp
      ,case when steps.step_title IS NULL or steps.step_title LIKE '% |  |  %' then 'not available' else steps.step_title end as step_title
      ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
+     ,r.image_url
 from materialized_views.isa_services_recipe_consolidated as r
 left join (select * from recipe_usage_IT_JP_IE where region_code = 'it' and market = 'it') as u on u.recipe_code = r.recipe_code
 left join (select * from nutrition_INT where market = 'it' AND segment = 'IT') n on n.recipe_id = r.id
@@ -802,8 +805,8 @@ select r.id as uuid
        ,p.seasonalityrisk
        ,round(p.cost2p,2) as cost2p
        --,round(p.cost3p,2) as cost3p
-       ,round(p.cost4p,2) as cost4p
-       ,p.pricemissingskus
+       --,round(p.cost4p,2) as cost4p
+       --,p.pricemissingskus
      ,u.last_used as lastused
      --,u.last_used_running_week
      --,u.next_used as nextused
@@ -811,12 +814,13 @@ select r.id as uuid
      ,case when u.absolute_last_used is NULL then '' else u.absolute_last_used end as absolutelastused
      --,case when u.absolute_last_used_running_week is NULL then -1 else u.absolute_last_used_running_week end as absolutelastusedrunning
      ,coalesce(cast(u.is_newrecipe as integer),1) as isnewrecipe
-     --,coalesce(cast(u.is_newscheduled as integer),0) as isnewscheduled
+     ,coalesce(cast(u.is_newscheduled as integer),0) as isnewscheduled
      ,r.is_default as isdefault
      ,dense_rank() over (partition by r.recipe_code, r.market order by r.version  desc) as o
      ,r.updated_at as updated_at --its not unix timestamp
      ,case when steps.step_title IS NULL or steps.step_title LIKE '% |  |  %' then 'not available' else steps.step_title end as step_title
      ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
+     ,r.image_url
 from materialized_views.isa_services_recipe_consolidated as r
 left join (select * from recipe_usage_IT_JP_IE where region_code = 'jp' and market = 'jp')as u on u.recipe_code = r.recipe_code
 left join (select * from nutrition_INT where market = 'jp' AND segment = 'JP') n on n.recipe_id = r.id
@@ -902,8 +906,8 @@ select r.id as uuid
        ,p.seasonalityrisk
        ,round(p.cost2p,2) as cost2p
        --,round(p.cost3p,2) as cost3p
-       ,round(p.cost4p,2) as cost4p
-       ,p.pricemissingskus
+       --,round(p.cost4p,2) as cost4p
+       --,p.pricemissingskus
      ,u.last_used as lastused
      --,u.last_used_running_week
      --,u.next_used as nextused
@@ -911,12 +915,13 @@ select r.id as uuid
      ,case when u.absolute_last_used is NULL then '' else u.absolute_last_used end as absolutelastused
      --,case when u.absolute_last_used_running_week is NULL then -1 else u.absolute_last_used_running_week end as absolutelastusedrunning
      ,coalesce(cast(u.is_newrecipe as integer),1) as isnewrecipe
-     --,coalesce(cast(u.is_newscheduled as integer),0) as isnewscheduled
+     ,coalesce(cast(u.is_newscheduled as integer),0) as isnewscheduled
      ,r.is_default as isdefault
      ,dense_rank() over (partition by r.recipe_code, r.market order by r.version  desc) as o
      ,r.updated_at as updated_at --its not unix timestamp
      ,case when steps.step_title IS NULL or steps.step_title LIKE '% |  |  %' then 'not available' else steps.step_title end as step_title
      ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
+     ,r.image_url
 from materialized_views.isa_services_recipe_consolidated as r
 left join (select * from recipe_usage_IT_JP_IE where region_code = 'ie' and market = 'ie') as u on u.recipe_code = r.recipe_code
 left join (select * from nutrition_INT where market = 'ie' AND segment = 'IE') as n on n.recipe_id = r.id
@@ -1279,19 +1284,20 @@ select cast(r.id as varchar) as rempsid
        --,r.author
        ,round(rc.cost_2p,2) as cost2p
        --,round(rc.cost_3p,2) as cost3p
-       ,round(rc.cost_4p,2) as cost4p
-       ,p.skucode as pricemissingskus -- (disregard as this is just a dummy)
+       --,round(rc.cost_4p,2) as cost4p
+       --,p.skucode as pricemissingskus -- (disregard as this is just a dummy)
        --,round(rc.cost_1p,2) as cost1p
       ,r.lastused
        --,r.nextused
       ,r.absolutelastused
      ,case when r.lastused is NULL and r.nextused is NULL THEN 1 else 0 end as isnewrecipe
-     --,case when r.nextused is not NULL and r.lastused is NULL  then 1 else 0 end as isnewscheduled
+     ,case when r.nextused is not NULL and r.lastused is NULL  then 1 else 0 end as isnewscheduled
      ,r.isdefault as isdefault
      ,dense_rank() over (partition by r.mainrecipecode, r.country, case when right(r.uniquerecipecode,2) in ('FR','CH','DK') then right(r.uniquerecipecode,2) else 'X' end order by cast(r.version as int) desc) as o
      ,TO_TIMESTAMP(cast(r2.fk_imported_at as string),'yyyyMMdd') as updated_at --its not unix timestamp
      ,case when steps.step_title IS NULL or steps.step_title LIKE '% |  |  %' then 'not available' else steps.step_title end as step_title
      ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
+     ,r.mainimageurl as image_url
 from materialized_views.int_scm_analytics_remps_recipe as r
 left join (select * from last_recipe_remps where remps_instance = 'CA') as r2 on r2.unique_recipe_code=r.uniquerecipecode
 left join (select * from last_cost_remps where remps_instance = 'CA') as rc on rc.recipe_cost__recipe=r2.id
@@ -1658,21 +1664,23 @@ select cast(r.id as varchar) as rempsid
        --,round(p.cost_1p,2) as cost1p
        ,round(p.cost_2p,2) as cost2p
        --,round(p.cost_3p,2) as cost3p
-       ,round(p.cost_4p,2) as cost4p
+       --,round(p.cost_4p,2) as cost4p
        --,coalesce(u.budget,0) as budget
        --,coalesce(round(u.budget-round(rc.cost_2p,2),2),-round(rc.cost_2p,2)) as differencebudgetcost2p
-       ,p.pricemissingskus
+       --,p.pricemissingskus
        --,p.pricemissingskunames
        ,r.lastused
        --,r.nextused
        ,r.absolutelastused
        --,case when w.hellofresh_running_week is NOT NULL then w.hellofresh_running_week else -1 end as absolutelastusedrunning
        ,case when r.lastused is NULL and r.nextused is NULL THEN 1 else 0 end as isnewrecipe
+       ,case when r.nextused is not NULL and r.lastused is NULL  then 1 else 0 end as isnewscheduled
        ,r.isdefault as isdefault
        ,dense_rank() over (partition by r.mainrecipecode, r.country, case when right(r.uniquerecipecode,2) in ('FR','CH','DK') then right(r.uniquerecipecode,2) else 'X' end order by cast(r.version as int) desc) as o
        ,TO_TIMESTAMP(cast(r2.fk_imported_at as string),'yyyyMMdd') as updated_at --its not unix timestamp
        ,case when steps.step_title IS NULL or steps.step_title LIKE '% |  |  %' then 'not available' else steps.step_title end as step_title
        ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
+       ,r.mainimageurl as image_url
 from (select* from materialized_views.int_scm_analytics_remps_recipe where country = 'FR') as r
 left join last_recipe_FR r2 on r2.unique_recipe_code=r.uniquerecipecode
 left join (select * from last_cost_remps where remps_instance = 'FR') as rc on rc.id=r2.recipe__recipe_cost
@@ -1803,8 +1811,8 @@ select cast(r.id as varchar) as rempsid
      --,round(rc.cost_1p,2) as cost1p
      ,round(rc.cost_2p,2) as cost2p
      --,round(rc.cost_3p,2) as cost3p
-     ,round(rc.cost_4p,2) as cost4p
-     ,p.skucode as pricemissingskus -- (disregard as this is just a dummy)
+     --,round(rc.cost_4p,2) as cost4p
+     --,p.skucode as pricemissingskus -- (disregard as this is just a dummy)
      /*,p.pickcount
      ,p.singlepick
      ,coalesce(com.risk_index,1) as riskindex
@@ -1814,12 +1822,13 @@ select cast(r.id as varchar) as rempsid
      ,r.absolutelastused
      --,case when w.hellofresh_running_week is NOT NULL then w.hellofresh_running_week else -1 end as absolutelastusedrunning
      ,case when r.lastused is NULL and r.nextused is NULL THEN 1 else 0 end as isnewrecipe
-     --,case when r.nextused is not NULL and r.lastused is NULL  then 1 else 0 end as isnewscheduled
+     ,case when r.nextused is not NULL and r.lastused is NULL  then 1 else 0 end as isnewscheduled
      ,r.isdefault as isdefault
      ,dense_rank() over (partition by r.mainrecipecode, r.country, case when right(r.uniquerecipecode,2) in ('FR','CH','DK') then right(r.uniquerecipecode,2) else 'X' end order by cast(r.version as int) desc) as o
      ,TO_TIMESTAMP(cast(r2.fk_imported_at as string),'yyyyMMdd') as updated_at --its not unix timestamp
      ,case when steps.step_title IS NULL or steps.step_title LIKE '% |  |  %' then 'not available' else steps.step_title end as step_title
      ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
+     ,r.mainimageurl as image_url
 from materialized_views.int_scm_analytics_remps_recipe as r
 left join (select * from last_recipe_remps where remps_instance = 'DACH') as r2 on r2.unique_recipe_code=r.uniquerecipecode
 left join (select * from last_cost_remps where remps_instance = 'DACH') as rc on rc.id=r2.recipe__recipe_cost
