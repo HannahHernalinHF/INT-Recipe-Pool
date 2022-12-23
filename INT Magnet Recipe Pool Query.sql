@@ -22,8 +22,8 @@ WITH seasonality_DKSE_NO AS (
    , nutrition_INT AS (
     SELECT *
     FROM materialized_views.culinary_services_recipe_segment_nutrition
-    WHERE market IN ('dkse', 'it', 'jp','ie')
-      AND segment IN ('SE','NO', 'IT', 'JP', 'IE')
+    WHERE market IN ('dkse', 'it', 'jp','ie','es')
+      AND segment IN ('SE','NO', 'IT', 'JP', 'IE','ES')
 )
    , cost_INT AS (
     SELECT segment
@@ -31,10 +31,10 @@ WITH seasonality_DKSE_NO AS (
          , size
          , AVG (price) AS cost
     FROM materialized_views.culinary_services_recipe_static_price
-    WHERE segment IN ('SE','NO','IT','JP','GR','IE')
+    WHERE segment IN ('SE','NO','IT','JP','GR','IE','ES')
       --AND distribution_center IN ('SK','MO')
-      AND hellofresh_week >= '2022-W49'
-      AND hellofresh_week <= '2022-W52'
+      AND hellofresh_week >= '2022-W51'
+      AND hellofresh_week <= '2023-W10'
     GROUP BY 1, 2, 3
     )
     , sku_cost_DKSE_NO AS (
@@ -45,8 +45,8 @@ WITH seasonality_DKSE_NO AS (
         ON sku.id=sp.culinary_sku_id
         WHERE sku.market='dkse'
           AND sp.distribution_center IN ('SK','MO')
-          --AND sp.hellofresh_week >= '2022-W37'
-          --AND sp.hellofresh_week <= '2022-W65'
+          AND sp.hellofresh_week >= '2022-W51'
+          AND sp.hellofresh_week <= '2023-W10'
         GROUP BY 1
     )
     , picklists_DKSE_NO AS (
@@ -116,8 +116,8 @@ WITH seasonality_DKSE_NO AS (
             ON r.id = p.recipe_id
             LEFT JOIN materialized_views.procurement_services_culinarysku as skus
               ON skus.id = p.culinarysku_id
-            WHERE r.market IN ('dkse','it','jp','ie','gb')
-            AND p.segment_name IN ('SE', 'NO', 'IT','JP','IE','GR')
+            WHERE r.market IN ('dkse','it','jp','ie','gb','es')
+            AND p.segment_name IN ('SE', 'NO', 'IT','JP','IE','GR','ES')
             AND skus.status LIKE '%Inactive%' OR skus.status LIKE '%Archived%'
             AND p.size = 2
             GROUP BY 1, 2, 3, 4, 5, 6, 7--, 11, 12
@@ -145,8 +145,8 @@ WITH seasonality_DKSE_NO AS (
             ON r.id = p.recipe_id
             LEFT JOIN materialized_views.procurement_services_culinarysku as skus
                ON skus.id = p.culinarysku_id
-            WHERE r.market IN ('dkse','it','jp','ie','gb')
-            AND p.segment_name IN ('SE','NO','IT','JP','IE','GR')
+            WHERE r.market IN ('dkse','it','jp','ie','gb','es')
+            AND p.segment_name IN ('SE','NO','IT','JP','IE','GR','ES')
             AND p.name LIKE '%DO NOT USE%' OR p.name LIKE '%do not use%'
             AND p.size = 2
             GROUP BY 1, 2, 3, 4, 5, 6, 7--, 11, 12
@@ -173,8 +173,8 @@ WITH seasonality_DKSE_NO AS (
             ON r.id = p.recipe_id
             LEFT JOIN materialized_views.procurement_services_culinarysku as skus
                ON skus.id = p.culinarysku_id
-            WHERE r.market IN ('dkse','it','jp','ie','gb')
-            AND p.segment_name IN ('SE', 'NO', 'IT','JP','IE','GR')
+            WHERE r.market IN ('dkse','it','jp','ie','gb','es')
+            AND p.segment_name IN ('SE', 'NO', 'IT','JP','IE','GR','ES')
             AND lower(p.name) LIKE '%chili%'
                  OR lower(p.name) LIKE '%chilli%'
                  OR lower(p.name) LIKE '%sriracha%'
@@ -477,13 +477,13 @@ select country,
     sku,
     max(seasonality_score) as seasonality_score
 from uploads.gp_sku_seasonality
-where country IN ('IT','JP','GB','IE','CA','FR','DACH') and week>='W47'and week<='W52'
+where country IN ('IT','JP','GB','IE','CA','FR','DACH','ES') and week>='W47'and week<='W52'
 group by 1,2
 )
 
-, recipe_usage_IT_JP_IE as(
+, recipe_usage_IT_JP_IE_ES as(
 select * from materialized_views.isa_services_recipe_usage
-where region_code in ('it','jp','ie') and market in ('it','jp','ie')
+where region_code in ('it','jp','ie','es') and market in ('it','jp','ie','es')
 )
 
 , recipe_usage_GB as(
@@ -491,12 +491,12 @@ select * from materialized_views.isa_services_recipe_usage
 where market = 'gb'
 )
 
-, sku_cost_IT_JP_GB_IE as(
+, sku_cost_IT_JP_GB_IE_ES as(
 select market, code,  avg(price) as price
 from materialized_views.procurement_services_staticprices sp
 left join materialized_views.procurement_services_culinarysku sku
 on sku.id=sp.culinary_sku_id
-where  sku.market in ('it','jp','gb','ie') --and sp.hellofresh_week >= '2022-W37' and sp.hellofresh_week <= '2022-W65'
+where  sku.market in ('it','jp','gb','ie','es') and sp.hellofresh_week >= '2022-W51' and sp.hellofresh_week <= '2023-W10'
 group by 1,2
 )
 
@@ -533,7 +533,7 @@ group by 1,2
         from materialized_views.isa_services_recipe_consolidated r
         join materialized_views.culinary_services_recipe_procurement_picklist_culinarysku p on r.id = p.recipe_id
         join materialized_views.procurement_services_culinarysku pk on p.code = pk.code
-        left join (select * from sku_cost_IT_JP_GB_IE where market = 'it') as c on c.code = p.code
+        left join (select * from sku_cost_IT_JP_GB_IE_ES where market = 'it') as c on c.code = p.code
         left join (select * from seasonality_INT2 where country = 'IT') as s on s.sku = p.code
         where r.market in ('it') and p.segment_name IN ('IT') and p.size = 2
         group by 1,2,3,4,5,6,7,8,13,14) t
@@ -573,7 +573,7 @@ group by 1,2
         from materialized_views.isa_services_recipe_consolidated r
         join materialized_views.culinary_services_recipe_procurement_picklist_culinarysku p on r.id = p.recipe_id
         join materialized_views.procurement_services_culinarysku pk on p.code = pk.code
-        left join (select * from sku_cost_IT_JP_GB_IE where market = 'jp') as c on c.code = p.code
+        left join (select * from sku_cost_IT_JP_GB_IE_ES where market = 'jp') as c on c.code = p.code
         left join (select * from seasonality_INT2 where country = 'JP') as s on s.sku = p.code
         where r.market in ('jp') and p.segment_name IN ('JP') and p.size = 2
         group by 1,2,3,4,5,6,7,8,13,14) t
@@ -613,7 +613,7 @@ group by 1,2
         from materialized_views.isa_services_recipe_consolidated r
         join materialized_views.culinary_services_recipe_procurement_picklist_culinarysku p on r.id = p.recipe_id
         join materialized_views.procurement_services_culinarysku pk on p.code = pk.code
-        left join (select * from sku_cost_IT_JP_GB_IE where market = 'ie') as c on c.code = p.code
+        left join (select * from sku_cost_IT_JP_GB_IE_ES where market = 'ie') as c on c.code = p.code
         left join (select * from seasonality_INT2 where country = 'IE') as s on s.sku = p.code
         where r.market = 'ie' and p.segment_name = 'IE' and p.size = 2
         group by 1,2,3,4,5,6,7,8,13,14) t
@@ -703,7 +703,7 @@ select r.id as uuid
      ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
      ,r.image_url
 from materialized_views.isa_services_recipe_consolidated as r
-left join (select * from recipe_usage_IT_JP_IE where region_code = 'it' and market = 'it') as u on u.recipe_code = r.recipe_code
+left join (select * from recipe_usage_IT_JP_IE_ES where region_code = 'it' and market = 'it') as u on u.recipe_code = r.recipe_code
 left join (select * from nutrition_INT where market = 'it' AND segment = 'IT') n on n.recipe_id = r.id
 left join (select * from cost_INT where size=1 and segment = 'IT') rc_1 on rc_1.recipe_id=r.id
 left join (select * from cost_INT where size=2 and segment = 'IT') rc_2 on rc_2.recipe_id=r.id
@@ -806,7 +806,7 @@ select r.id as uuid
      ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
      ,r.image_url
 from materialized_views.isa_services_recipe_consolidated as r
-left join (select * from recipe_usage_IT_JP_IE where region_code = 'jp' and market = 'jp')as u on u.recipe_code = r.recipe_code
+left join (select * from recipe_usage_IT_JP_IE_ES where region_code = 'jp' and market = 'jp')as u on u.recipe_code = r.recipe_code
 left join (select * from nutrition_INT where market = 'jp' AND segment = 'JP') n on n.recipe_id = r.id
 left join (select * from cost_INT where size=1 and segment = 'JP') rc_1 on rc_1.recipe_id=r.id
 left join (select * from cost_INT where size=2 and segment = 'JP') rc_2 on rc_2.recipe_id=r.id
@@ -907,7 +907,7 @@ select r.id as uuid
      ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
      ,r.image_url
 from materialized_views.isa_services_recipe_consolidated as r
-left join (select * from recipe_usage_IT_JP_IE where region_code = 'ie' and market = 'ie') as u on u.recipe_code = r.recipe_code
+left join (select * from recipe_usage_IT_JP_IE_ES where region_code = 'ie' and market = 'ie') as u on u.recipe_code = r.recipe_code
 left join (select * from nutrition_INT where market = 'ie' AND segment = 'IE') as n on n.recipe_id = r.id
 left join (select * from cost_INT where size=1 and segment = 'IE') rc_1 on rc_1.recipe_id=r.id
 left join (select * from cost_INT where size=2 and segment = 'IE') rc_2 on rc_2.recipe_id=r.id
@@ -1320,7 +1320,7 @@ where o=1 --and scorewoscm>0
     from materialized_views.procurement_services_staticprices sp
     left join materialized_views.procurement_services_culinarysku sku
     on sku.id=sp.culinary_sku_id
-    where sku.market='beneluxfr' and sp.distribution_center='DH' --and  sp.hellofresh_week >= '{weekstr1}' and sp.hellofresh_week <= '{weekstr4}'
+    where sku.market='beneluxfr' and sp.distribution_center='DH' and  sp.hellofresh_week >= '2022-W51' and sp.hellofresh_week <= '2023-W10'
     group by 1,2
 )
 
@@ -1777,7 +1777,7 @@ where o=1)
         from materialized_views.isa_services_recipe_consolidated r
         join materialized_views.culinary_services_recipe_procurement_picklist_culinarysku p on r.id = p.recipe_id and r.market = p.market
         join materialized_views.procurement_services_culinarysku skus on p.code = skus.code and p.market = skus.market
-        left join (select * from sku_cost_IT_JP_GB_IE where market = 'gb') c on c.code = p.code
+        left join (select * from sku_cost_IT_JP_GB_IE_ES where market = 'gb') c on c.code = p.code
         left join (select * from seasonality_INT2 where country = 'GB') s on s.sku = p.code
         where r.market = 'gb' and p.segment_name = 'GR'
         group by 1,2,3,4,5,6) t
@@ -2016,6 +2016,143 @@ where lower(r.status) in ('ready for menu planning','final cook')
 ) temp
 where o=1)
 
+,picklists_ES as(
+    select
+    unique_recipe_code
+    , group_concat(code," | ") as skucode
+    , group_concat(name," | ") as skuname
+    , group_concat(packaging_type," | ") as skupackaging_type
+    , max(coalesce(seasonality_score,0)) as seasonalityrisk
+    , count(distinct code) as skucount
+    , sum(cost1p) as cost1p
+    , sum(cost2p) as cost2p
+    , sum(cost3p) as cost3p
+    , sum(cost4p) as cost4p
+    , group_concat(price_missing," | ") as pricemissingskus
+    from (
+        select
+         r.unique_recipe_code
+        , p.code
+        , regexp_replace(p.name, '\t|\n', '') as name
+        , pk.packaging_type
+        , seasonality_score
+        , case when price is null or price=0 then p.code else NULL end as price_missing
+        , sum(case when size = 1 then pick_count * price else 0 end) as cost1p
+        , sum(case when size = 2 then pick_count * price else 0 end) as cost2p
+        , sum(case when size = 3 then pick_count * price else 0 end) as cost3p
+        , sum(case when size = 4 then pick_count * price else 0 end) as cost4p
+        from materialized_views.isa_services_recipe_consolidated r
+        join materialized_views.culinary_services_recipe_procurement_picklist_culinarysku p on r.id = p.recipe_id
+        join materialized_views.procurement_services_culinarysku pk on p.code = pk.code
+        left join sku_cost_IT_JP_GB_IE_ES c on c.code = p.code
+        left join seasonality_INT2 s on s.sku = p.code
+        where r.market = 'es' and p.segment_name = 'ES'
+        group by 1,2,3,4,5,6) t
+    group by 1
+)
+
+, all_recipes_ES as(
+select * from(
+select r.id as uuid
+       ,upper(r.market) as country
+       ,r.unique_recipe_code as uniquerecipecode
+       ,r.recipe_code as code
+       ,r.version
+       ,r.status
+       ,regexp_replace(r.title, '\t|\n', '') as title
+       ,concat(regexp_replace(r.title, '\t|\n', ''), coalesce(regexp_replace(r.subtitle, '\t|\n', ''),'') ,coalesce (r.primary_protein,''),coalesce(r.primary_starch,''),coalesce(r.cuisine,''), coalesce(r.dish_type,''), coalesce(r.primary_vegetable,'')) as subtitle
+       ,case when r.primary_protein IS NULL or r.primary_protein = "" then 'not available' else r.primary_protein end as primaryprotein
+       ,r.main_protein as mainprotein
+       ,r.protein_cut as proteincut
+       ,coalesce(r.secondary_protein,'none') as secondaryprotein
+       ,r.proteins
+       ,case when r.primary_starch IS NULL or r.primary_starch = '' then 'not available' else r.primary_starch end as primarystarch
+       ,r.main_starch as mainstarch
+       ,coalesce(r.secondary_starch,'none') as secondarystarch
+       ,r.starches
+       ,case when coalesce(r.primary_vegetable,'none') IS NULL or coalesce(r.primary_vegetable,'none') = '' then 'not available' else r.primary_protein end as primaryvegetable
+       ,r.main_vegetable as mainvegetable
+       --,r.vegetables
+       ,coalesce(r.secondary_vegetable,'none') as secondaryvegetable
+       --,coalesce(r.tertiary_vegetable,'none') as tertiaryvegetable
+       --,coalesce(r.primary_dry_spice,'none') as primarydryspice
+       ,coalesce(r.primary_cheese,'none') as primarycheese
+       ,coalesce(r.primary_fruit,'none') as primaryfruit
+       ,coalesce(r.primary_dairy,'none') as primarydairy
+       --,coalesce(r.primary_fresh_herb,'none') as primaryfreshherb
+       --,coalesce(r.sauce_paste,'none') as saucepaste
+       ,case when n.salt is null then 0 else n.salt end as salt
+       ,case when n.energy = 0 or n.energy is null then 999 else n.energy end as calories
+       ,case when n.carbs = 0  or n.carbs is null then 999 else n.carbs end as carbohydrates
+       ,case when n.proteins = 0 or n.proteins is null then 999 else n.proteins end as n_proteins
+       ,case when r.cuisine IS NULL or r.cuisine = '' then 'not available' else r.cuisine end as cuisine
+       ,case when r.dish_type IS NULL or r.dish_type = '' then 'not available' else r.dish_type end as dishtype
+       ,case when r.hands_on_time ="" or r.hands_on_time is NULL then cast(99 as float)
+             else cast(r.hands_on_time as float) end as handsontime
+       ,case when r.hands_on_time ="" or r.hands_on_time is NULL then cast(99 as float)
+             else cast(r.hands_on_time as float) end
+              +
+        case when r.hands_off_time ="" or r.hands_off_time is NULL then cast(99 as float)
+             else cast(r.hands_off_time as float) end
+              as totaltime
+       ,r.difficulty
+       --,r.tags as tag
+       ,case when r.target_preferences IS NULL or r.target_preferences = '' then 'not available' else r.target_preferences end as preference
+       ,concat (r.tags,r.target_preferences) as preftag
+       ,case when r.recipe_type IS NULL OR r.recipe_type = '' then 'not available' else r.recipe_type end as recipetype
+       --,r.target_products as producttype
+       ,p.skucode
+       ,lower(p.skuname) as skuname
+       , p.skucount
+       --, sc2p.skucount
+       , i.inactiveskus_count
+       , d.donotuseskus_count
+       , i.inactiveskus
+       , d.donotuseskus
+       , k.spicy_sku_count
+       , k.spicy_skus
+       --,r.created_by as author
+       --,r.label
+       --,round(p.cost1p,2) as cost1p
+       ,p.seasonalityrisk
+       ,round(p.cost2p,2) as cost2p
+       --,round(p.cost3p,2) as cost3p
+       --,round(p.cost4p,2) as cost4p
+       --,p.pricemissingskus
+     ,u.last_used as lastused
+     --,u.last_used_running_week
+     --,u.next_used as nextused
+     --,u.next_used_running_week
+     ,case when u.absolute_last_used is NULL then '' else u.absolute_last_used end as absolutelastused
+     --,case when u.absolute_last_used_running_week is NULL then -1 else u.absolute_last_used_running_week end as absolutelastusedrunning
+     ,coalesce(cast(u.is_newrecipe as integer),1) as isnewrecipe
+     ,coalesce(cast(u.is_newscheduled as integer),0) as isnewscheduled
+     ,r.is_default as isdefault
+     ,dense_rank() over (partition by r.recipe_code, r.market order by r.version  desc) as o
+     ,r.updated_at as updated_at --its not unix timestamp
+     ,case when steps.step_title IS NULL or steps.step_title LIKE '% |  |  %' then 'not available' else steps.step_title end as step_title
+     ,case when steps.step_description IS NULL or steps.step_description LIKE '% |  |  %' then 'not available' else steps.step_description end as step_description
+     ,r.image_url
+from materialized_views.isa_services_recipe_consolidated as r
+left join (select * from recipe_usage_IT_JP_IE_ES where region_code = 'es' and market = 'es') as u on u.recipe_code = r.recipe_code
+left join (select * from nutrition_INT where market = 'es' AND segment = 'ES') as n on n.recipe_id = r.id
+left join (select * from cost_INT where size=1 and segment = 'ES') rc_1 on rc_1.recipe_id=r.id
+left join (select * from cost_INT where size=2 and segment = 'ES') rc_2 on rc_2.recipe_id=r.id
+left join (select * from cost_INT where size=3 and segment = 'ES') rc_3 on rc_3.recipe_id=r.id
+left join (select * from cost_INT where size=4 and segment = 'ES') rc_4 on rc_4.recipe_id=r.id
+left join picklists_ES as p on p.unique_recipe_code=r.unique_recipe_code
+left join (select * from inactiveskus_INT where market = 'es' and segment_name = 'ES' ) as i on p.unique_recipe_code = i.unique_recipe_code --and on p.skucode = i.skucode
+left join (select * from donotuseskus_INT where market = 'es' and segment_name = 'ES' ) as d on p.unique_recipe_code = d.unique_recipe_code --and on p.skucode = d.skucode
+left join (select * from spicysku_INT where market = 'es' and segment_name = 'ES') as k on p.unique_recipe_code = k.unique_recipe_code
+left join steps_INT as steps ON steps.recipe_id = r.id
+where lower(r.status) in ('ready for menu planning', 'in development')
+    and  r.market='es'
+    and length(r.primary_protein)>0
+    and r.primary_protein <>'N/A'
+    and  p.cost2p >0
+    --and  p.cost4p >0
+) temp
+where isdefault=1)
 
 select distinct * from all_recipes_DKSE
 UNION ALL
@@ -2034,3 +2171,5 @@ UNION ALL
 select distinct * from all_recipes_DACH
 UNION ALL
 select distinct * from all_recipes_GB
+UNION ALL
+select distinct * from all_recipes_ES
